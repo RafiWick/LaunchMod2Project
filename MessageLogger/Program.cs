@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 using (var context = new MessageLoggerContext())
 {
+    Console.WriteLine(string.Join("\n",MessageStatistics(context)));
     User user = null;
     string userInput = "";
     if (!context.Users.Any())
@@ -47,7 +48,9 @@ using (var context = new MessageLoggerContext())
         }
         else if (userInput.ToLower() == "existing")
         {
-            user = ExistingUser(context);
+            Console.Write("What is your username? ");
+            string username = Console.ReadLine();
+            user = ExistingUser(context, username);
 
             if (user != null)
             {
@@ -65,7 +68,7 @@ using (var context = new MessageLoggerContext())
     }
 
     Console.WriteLine("Thanks for using Message Logger!");
-    foreach (var u in context.Users)
+    foreach (var u in context.Users.Include(u => u.Messages))
     {
         Console.WriteLine($"{u.Name} wrote {u.Messages.Count} messages.");
     }
@@ -93,12 +96,11 @@ User NewUser(MessageLoggerContext context)
     Console.Write("Add a message (or `quit` to exit): ");
     return user;
 }
-User ExistingUser(MessageLoggerContext context)
+User ExistingUser(MessageLoggerContext context, string username)
 {
-    Console.Write("What is your username? ");
-    string username = Console.ReadLine();
+    
     User user = null;
-    foreach (var existingUser in context.Users)
+    foreach (var existingUser in context.Users.Include(user => user.Messages))
     {
         if (existingUser.Username == username)
         {
@@ -106,4 +108,133 @@ User ExistingUser(MessageLoggerContext context)
         }
     }
     return user;
+}
+
+
+List<string> MessageStatistics(MessageLoggerContext context)
+{
+    var returnList = new List<string>();
+    Console.WriteLine("(1) all users ordered by how many messages they've created" +
+        "\n(2) the 10 most common words used by all users or a specific user" +
+        "\n(3) what hour had the most messages made" +
+        "\nenter the number of the summary you would like to see");
+    var userInput = Console.ReadLine();
+    if (userInput == "1")
+    {
+        returnList = UsersByNumberOfMessages(context);
+    }
+    else if (userInput == "2")
+    {
+        returnList = MostCommonWords(context);
+    }
+    else if (userInput == "3")
+    {
+        returnList = BusiestHour(context);
+    }
+    return returnList;
+}
+
+List<string> UsersByNumberOfMessages(MessageLoggerContext context)
+{
+    var ListOfUsers = context.Users.Include(user => user.Messages);
+    var orderedListOfUsers = ListOfUsers.OrderByDescending(user => user.Messages.Count());
+    var orderedListOfNames = orderedListOfUsers.Select(user => user.Name).ToList();
+    return orderedListOfNames;
+}
+List<string> MostCommonWords(MessageLoggerContext context)
+{
+    var returnList = new List<string>();
+    var wordList = new List<string>();
+    Console.WriteLine("enter the username of the account you'd like to see their top 10 words" +
+        "\nenter anything else to see the top 10 words of all users");
+    string userInput = Console.ReadLine();
+    User user = ExistingUser(context, userInput);
+    if (user != null)
+    {
+        foreach (Message message in user.Messages)
+        {
+            wordList.AddRange((message.Content.ToLower()).Split(" "));
+        }
+    }
+    else
+    {
+        var listOfMessages = new List<Message>();
+        foreach (User mUser in context.Users.Include(user => user.Messages))
+        {
+            listOfMessages.AddRange(mUser.Messages);
+        }
+        foreach (Message message in listOfMessages)
+        {
+            wordList.AddRange((message.Content.ToLower()).Split(" "));
+        }
+    }
+    returnList = TenMostFrequent(wordList);
+    return returnList;
+}
+
+List<string> TenMostFrequent(List<string> wordList)
+{
+    var returnList = new List<string>();
+    var countedWords = new Dictionary<string, int>();
+    foreach (string word in wordList)
+    {
+        if (countedWords.ContainsKey(word))
+        {
+            countedWords[word] += 1;
+        }
+        else
+        {
+            countedWords.Add(word, 1);
+        }
+    }
+    var orderedCountedWords = countedWords.OrderByDescending(d => d.Value);
+    foreach (KeyValuePair<string, int> word in orderedCountedWords)
+    {
+        if (returnList.Count() >= 10) break;
+        string w = "";
+        w += word.Key;
+        w += " : ";
+        w += word.Value.ToString();
+        returnList.Add(w);
+    }
+    return returnList;
+}
+List<string> BusiestHour(MessageLoggerContext context)
+{
+    var returnList = new List<string>();
+    var allMessages = new List<Message>();
+    foreach(User user in context.Users.Include(u => u.Messages))
+    {
+        allMessages.AddRange(user.Messages);
+    }
+    var countedHours = new Dictionary<DateTime, int>();
+    foreach(Message message in allMessages)
+    {
+        DateTime hour = new DateTime(message.CreatedAt.Year,
+            message.CreatedAt.Month, message.CreatedAt.Day, message.CreatedAt.Hour, 0, 0);
+        if (countedHours.ContainsKey(hour))
+        {
+            countedHours[hour] += 1;
+        }
+        else
+        {
+            countedHours.Add(hour, 1);
+        }
+    }
+    var orderedCountedHours = countedHours.OrderByDescending(d => d.Value);
+    foreach(KeyValuePair<DateTime, int> hour in orderedCountedHours)
+    {
+        string h = "";
+        if (hour.Key.Hour > 12)
+        {
+            h = (hour.Key.Hour - 12).ToString() + " PM";
+        }
+        else
+        {
+            h = (hour.Key.Hour).ToString() + " AM";
+        }
+        returnList.Add($"the hour with the most posts is {h} on {hour.Key.Month}/{hour.Key.Day}/{hour.Key.Year}");
+        break;
+    }
+    return returnList;
 }
