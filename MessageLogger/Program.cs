@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 using (var context = new MessageLoggerContext())
 {
+    DataSeeder.SeedUsersAndMessages(context);
     User user = null;
     string userInput = "";
     if (!context.Users.Any())
