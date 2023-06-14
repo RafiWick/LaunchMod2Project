@@ -280,6 +280,7 @@ void EditMessage(User user, MessageLoggerContext context)
     Console.WriteLine("What would you like it to say instead");
     var newContent = Console.ReadLine();
     chosenMessage.Content = newContent;
+    chosenMessage.WasEdited = true;
     context.SaveChanges();
     Console.WriteLine("Message edited successfully");
 }
