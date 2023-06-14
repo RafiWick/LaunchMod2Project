@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 using (var context = new MessageLoggerContext())
 {
-    Console.WriteLine(string.Join("\n",MessageStatistics(context)));
+    //Console.WriteLine(string.Join("\n",MessageStatistics(context)));
     User user = null;
     string userInput = "";
     if (!context.Users.Any())
@@ -229,9 +229,17 @@ List<string> BusiestHour(MessageLoggerContext context)
         {
             h = (hour.Key.Hour - 12).ToString() + " PM";
         }
-        else
+        else if (hour.Key.Hour == 12)
+        {
+            h = (hour.Key.Hour).ToString() + " PM";
+        }
+        else if (hour.Key.Hour > 0)
         {
             h = (hour.Key.Hour).ToString() + " AM";
+        }
+        else
+        {
+            h = "12 AM";
         }
         returnList.Add($"the hour with the most posts is {h} on {hour.Key.Month}/{hour.Key.Day}/{hour.Key.Year}");
         break;
