@@ -42,7 +42,7 @@ while (userInput.ToLower() != "quit")
         userInput = Console.ReadLine();
         Console.WriteLine();
     }
-    Console.Write("Would you like to log in a `new` or `existing` user?, `quit' to exit the program, or 'query' to see the query options ");
+    Console.WriteLine("Would you like to log in a `new` or `existing` user?, `quit' to exit the program, or 'query' to see the query options ");
     userInput = Console.ReadLine();
     using (var context = new MessageLoggerContext())
     {
@@ -130,6 +130,7 @@ List<string> MessageStatistics(MessageLoggerContext context)
     Console.WriteLine("(1) all users ordered by how many messages they've created" +
         "\n(2) the 10 most common words used by all users or a specific user" +
         "\n(3) what hour had the most messages made" +
+        "\n(4) search messages by keyword" +
         "\nenter the number of the summary you would like to see");
     var userInput = Console.ReadLine();
     if (userInput == "1")
@@ -143,6 +144,10 @@ List<string> MessageStatistics(MessageLoggerContext context)
     else if (userInput == "3")
     {
         returnList = BusiestHour(context);
+    }
+    else if (userInput == "4")
+    {
+        returnList = Search(context);
     }
     return returnList;
 }
@@ -264,6 +269,20 @@ List<string> BusiestHour(MessageLoggerContext context)
         returnList.Add($"the hour with the most posts is {h} on {hour.Key.Month}/{hour.Key.Day}/{hour.Key.Year}");
         break;
     }
+    return returnList;
+}
+
+List<string> Search(MessageLoggerContext context)
+{
+    var returnList = new List<string>();
+    var messageList = new List<string>();
+    foreach (Message message in context.Messages)
+    {
+        messageList.Add(message.Content);
+    }
+    Console.WriteLine("Enter the word you like to search for");
+    var keyWord = Console.ReadLine();
+    returnList = messageList.Where(message => message.ToLower().Contains(keyWord)).ToList();
     return returnList;
 }
 
