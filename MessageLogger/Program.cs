@@ -6,58 +6,50 @@ using Microsoft.EntityFrameworkCore;
 using (var context = new MessageLoggerContext())
 {
     DataSeeder.SeedUsersAndMessages(context);
-    User user = null;
-    string userInput = "";
-    if (!context.Users.Any())
-    {
-        user = NewUser(context);
-        userInput = Console.ReadLine();
-    }
-    else
-    {
-        userInput = "log out";
-    }
+}
+User user = null;
+string userInput = "log out";
 
-    while (userInput.ToLower() != "quit")
+while (userInput.ToLower() != "quit")
+{
+    while (userInput.ToLower() != "log out" && userInput != "query")
     {
-        while (userInput.ToLower() != "log out")
+    using (var context = new MessageLoggerContext())
+    {
+        if (userInput.ToLower() == "edit" || userInput.ToLower() == "delete")
         {
-
-            if (userInput.ToLower() == "edit" || userInput.ToLower() == "delete")
+            if (userInput.ToLower() == "edit")
             {
-                if (userInput.ToLower() == "edit")
-                {
-                    EditMessage(user, context);
-                }
-                else
-                {
-                    DeleteMessage(user, context);
-                }
+                EditMessage(user, context);
             }
             else
             {
-                user.Messages.Add(new Message(userInput));
-                context.SaveChanges();
+                DeleteMessage(user, context);
             }
-            foreach (var message in user.Messages)
-            {
-                Console.WriteLine($"{user.Name} {message.CreatedAt:t}: {message.Content}");
-            }
-
-            Console.Write("Add a message: ");
-
-            userInput = Console.ReadLine();
-            Console.WriteLine();
         }
+        else
+        {
+            user.Messages.Add(new Message(userInput));
+            context.SaveChanges();
+        }
+    }
+        foreach (var message in user.Messages)
+        {
+            Console.WriteLine($"{user.Name} {message.CreatedAt:t}: {message.Content}");
+        }
+        Console.Write("Add a message: ");
 
-        Console.Write("Would you like to log in a `new` or `existing` user?, `quit' to exit the program, or 'query' to see the query options ");
         userInput = Console.ReadLine();
+        Console.WriteLine();
+    }
+    Console.WriteLine("Would you like to log in a `new` or `existing` user?, `quit' to exit the program, or 'query' to see the query options ");
+    userInput = Console.ReadLine();
+    using (var context = new MessageLoggerContext())
+    {
         if (userInput.ToLower() == "new")
         {
             user = NewUser(context);
-
             userInput = Console.ReadLine();
-
         }
         else if (userInput.ToLower() == "existing")
         {
@@ -80,17 +72,20 @@ using (var context = new MessageLoggerContext())
         }
         else if (userInput.ToLower() == "query")
         {
-            Console.WriteLine(string.Join("\n",MessageStatistics(context)));
+            Console.WriteLine(string.Join("\n", MessageStatistics(context)));
         }
-
     }
 
+}
+using (var context = new MessageLoggerContext())
+{
     Console.WriteLine("Thanks for using Message Logger!");
     foreach (var u in context.Users.Include(u => u.Messages))
     {
         Console.WriteLine($"{u.Name} wrote {u.Messages.Count} messages.");
     }
 }
+
 
 User NewUser(MessageLoggerContext context)
 {
@@ -135,6 +130,7 @@ List<string> MessageStatistics(MessageLoggerContext context)
     Console.WriteLine("(1) all users ordered by how many messages they've created" +
         "\n(2) the 10 most common words used by all users or a specific user" +
         "\n(3) what hour had the most messages made" +
+        "\n(4) search messages by keyword" +
         "\nenter the number of the summary you would like to see");
     var userInput = Console.ReadLine();
     if (userInput == "1")
@@ -148,6 +144,10 @@ List<string> MessageStatistics(MessageLoggerContext context)
     else if (userInput == "3")
     {
         returnList = BusiestHour(context);
+    }
+    else if (userInput == "4")
+    {
+        returnList = Search(context);
     }
     return returnList;
 }
@@ -192,11 +192,18 @@ List<string> MostCommonWords(MessageLoggerContext context)
 
 List<string> TenMostFrequent(List<string> wordList)
 {
+    for (int i = 0; i < wordList.Count(); i++)
+    {
+        while (wordList[i].Contains('.') || wordList[i].Contains(',') || wordList[i].Contains('!') || wordList[i].Contains('?') || wordList[i].Contains(':'))
+        {
+            wordList[i] = wordList[i].Remove(wordList[i].Length - 1);
+        }
+    }
     var returnList = new List<string>();
     var countedWords = new Dictionary<string, int>();
     foreach (string word in wordList)
     {
-        if (countedWords.ContainsKey(word))
+        if (countedWords.ContainsKey(word.ToLower()))
         {
             countedWords[word] += 1;
         }
@@ -262,6 +269,20 @@ List<string> BusiestHour(MessageLoggerContext context)
         returnList.Add($"the hour with the most posts is {h} on {hour.Key.Month}/{hour.Key.Day}/{hour.Key.Year}");
         break;
     }
+    return returnList;
+}
+
+List<string> Search(MessageLoggerContext context)
+{
+    var returnList = new List<string>();
+    var messageList = new List<string>();
+    foreach (Message message in context.Messages)
+    {
+        messageList.Add(message.Content);
+    }
+    Console.WriteLine("Enter the word you like to search for");
+    var keyWord = Console.ReadLine();
+    returnList = messageList.Where(message => message.ToLower().Contains(keyWord)).ToList();
     return returnList;
 }
 
