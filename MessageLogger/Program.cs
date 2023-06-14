@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 using (var context = new MessageLoggerContext())
 {
-    //Console.WriteLine(string.Join("\n",MessageStatistics(context)));
     User user = null;
     string userInput = "";
     if (!context.Users.Any())
@@ -23,9 +22,22 @@ using (var context = new MessageLoggerContext())
         while (userInput.ToLower() != "log out")
         {
 
-            user.Messages.Add(new Message(userInput));
-            context.SaveChanges();
-
+            if (userInput.ToLower() == "edit" || userInput.ToLower() == "delete")
+            {
+                if (userInput.ToLower() == "edit")
+                {
+                    EditMessage(user, context);
+                }
+                else
+                {
+                    DeleteMessage(user, context);
+                }
+            }
+            else
+            {
+                user.Messages.Add(new Message(userInput));
+                context.SaveChanges();
+            }
             foreach (var message in user.Messages)
             {
                 Console.WriteLine($"{user.Name} {message.CreatedAt:t}: {message.Content}");
@@ -37,7 +49,7 @@ using (var context = new MessageLoggerContext())
             Console.WriteLine();
         }
 
-        Console.Write("Would you like to log in a `new` or `existing` user? Or, `quit`? ");
+        Console.Write("Would you like to log in a `new` or `existing` user?, `quit' to exit the program, or 'query' to see the query options ");
         userInput = Console.ReadLine();
         if (userInput.ToLower() == "new")
         {
@@ -54,6 +66,7 @@ using (var context = new MessageLoggerContext())
 
             if (user != null)
             {
+                Console.WriteLine("To edit a message enter 'edit' or to delete amessage enter 'delete'");
                 Console.Write("Add a message: ");
                 userInput = Console.ReadLine();
             }
@@ -63,6 +76,10 @@ using (var context = new MessageLoggerContext())
                 userInput = "quit";
 
             }
+        }
+        else if (userInput.ToLower() == "query")
+        {
+            Console.WriteLine(string.Join("\n",MessageStatistics(context)));
         }
 
     }
@@ -92,7 +109,7 @@ User NewUser(MessageLoggerContext context)
     Console.WriteLine();
     Console.WriteLine("To log out of your user profile, enter `log out`.");
 
-    Console.WriteLine();
+    Console.WriteLine("To edit a message enter 'edit' or to delete amessage enter 'delete'");
     Console.Write("Add a message (or `quit` to exit): ");
     return user;
 }
@@ -245,4 +262,42 @@ List<string> BusiestHour(MessageLoggerContext context)
         break;
     }
     return returnList;
+}
+
+void EditMessage(User user, MessageLoggerContext context)
+{
+    int i = 1;
+    foreach(Message message in user.Messages)
+    {
+        Console.WriteLine($"({i}) {message.Content}");
+        i++;
+    }
+    Console.WriteLine("Enter the number of the message you'd like to edit");
+    var userInput = Console.ReadLine();
+    var inputId = Convert.ToInt32(userInput) - 1;
+    var chosenMessage = user.Messages[inputId];
+    Console.WriteLine(chosenMessage.Content);
+    Console.WriteLine("What would you like it to say instead");
+    var newContent = Console.ReadLine();
+    chosenMessage.Content = newContent;
+    context.SaveChanges();
+    Console.WriteLine("Message edited successfully");
+}
+void DeleteMessage(User user, MessageLoggerContext context)
+{
+    int i = 1;
+    foreach (Message message in user.Messages)
+    {
+        Console.WriteLine($"({i}) {message.Content}");
+        i++;
+    }
+    Console.WriteLine("Enter the number of the message you'd like to delete");
+    var userInput = Console.ReadLine();
+    var inputId = Convert.ToInt32(userInput) - 1;
+    var chosenMessage = user.Messages[inputId];
+    user.Messages.Remove(chosenMessage);
+    context.Messages.Remove(chosenMessage);
+    context.SaveChanges();
+    Console.WriteLine("Message deleted successfully");
+
 }
