@@ -6,58 +6,50 @@ using Microsoft.EntityFrameworkCore;
 using (var context = new MessageLoggerContext())
 {
     DataSeeder.SeedUsersAndMessages(context);
-    User user = null;
-    string userInput = "";
-    if (!context.Users.Any())
-    {
-        user = NewUser(context);
-        userInput = Console.ReadLine();
-    }
-    else
-    {
-        userInput = "log out";
-    }
+}
+User user = null;
+string userInput = "log out";
 
-    while (userInput.ToLower() != "quit")
+while (userInput.ToLower() != "quit")
+{
+    while (userInput.ToLower() != "log out" && userInput != "query")
     {
-        while (userInput.ToLower() != "log out")
+    using (var context = new MessageLoggerContext())
+    {
+        if (userInput.ToLower() == "edit" || userInput.ToLower() == "delete")
         {
-
-            if (userInput.ToLower() == "edit" || userInput.ToLower() == "delete")
+            if (userInput.ToLower() == "edit")
             {
-                if (userInput.ToLower() == "edit")
-                {
-                    EditMessage(user, context);
-                }
-                else
-                {
-                    DeleteMessage(user, context);
-                }
+                EditMessage(user, context);
             }
             else
             {
-                user.Messages.Add(new Message(userInput));
-                context.SaveChanges();
+                DeleteMessage(user, context);
             }
-            foreach (var message in user.Messages)
-            {
-                Console.WriteLine($"{user.Name} {message.CreatedAt:t}: {message.Content}");
-            }
-
-            Console.Write("Add a message: ");
-
-            userInput = Console.ReadLine();
-            Console.WriteLine();
         }
+        else
+        {
+            user.Messages.Add(new Message(userInput));
+            context.SaveChanges();
+        }
+    }
+        foreach (var message in user.Messages)
+        {
+            Console.WriteLine($"{user.Name} {message.CreatedAt:t}: {message.Content}");
+        }
+        Console.Write("Add a message: ");
 
-        Console.Write("Would you like to log in a `new` or `existing` user?, `quit' to exit the program, or 'query' to see the query options ");
         userInput = Console.ReadLine();
+        Console.WriteLine();
+    }
+    Console.Write("Would you like to log in a `new` or `existing` user?, `quit' to exit the program, or 'query' to see the query options ");
+    userInput = Console.ReadLine();
+    using (var context = new MessageLoggerContext())
+    {
         if (userInput.ToLower() == "new")
         {
             user = NewUser(context);
-
             userInput = Console.ReadLine();
-
         }
         else if (userInput.ToLower() == "existing")
         {
@@ -80,17 +72,20 @@ using (var context = new MessageLoggerContext())
         }
         else if (userInput.ToLower() == "query")
         {
-            Console.WriteLine(string.Join("\n",MessageStatistics(context)));
+            Console.WriteLine(string.Join("\n", MessageStatistics(context)));
         }
-
     }
 
+}
+using (var context = new MessageLoggerContext())
+{
     Console.WriteLine("Thanks for using Message Logger!");
     foreach (var u in context.Users.Include(u => u.Messages))
     {
         Console.WriteLine($"{u.Name} wrote {u.Messages.Count} messages.");
     }
 }
+
 
 User NewUser(MessageLoggerContext context)
 {
@@ -192,11 +187,18 @@ List<string> MostCommonWords(MessageLoggerContext context)
 
 List<string> TenMostFrequent(List<string> wordList)
 {
+    for (int i = 0; i < wordList.Count(); i++)
+    {
+        while (wordList[i].Contains('.') || wordList[i].Contains(',') || wordList[i].Contains('!') || wordList[i].Contains('?') || wordList[i].Contains(':'))
+        {
+            wordList[i] = wordList[i].Remove(wordList[i].Length - 1);
+        }
+    }
     var returnList = new List<string>();
     var countedWords = new Dictionary<string, int>();
     foreach (string word in wordList)
     {
-        if (countedWords.ContainsKey(word))
+        if (countedWords.ContainsKey(word.ToLower()))
         {
             countedWords[word] += 1;
         }

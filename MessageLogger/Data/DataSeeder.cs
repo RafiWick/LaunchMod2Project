@@ -20,7 +20,7 @@ namespace MessageLogger.Data
                 {
                     new Message("303!! THE DENVER NUGGETS ARE THR NBA CHAMPS!!!!"),
                     new Message("Are the Denver Nuggets the only team in NBA hisory to win an NBA Championship without an NBA Top 75 Player?"),
-                    new Message("Currently listening to Doc Rivers (former 76ers Head Coach) call Nikola Jokic the BEST PLAYER IN THE NBA"),
+                    new Message("Currently listening to Doc Rivers ( former 76ers Head Coach ) call Nikola Jokic the BEST PLAYER IN THE NBA"),
                     new Message("I am so proud of Jamal Murray. He deserves all of his flowers.\n1 of 4 players to ever average 20 PTS and 10 AST in an NBA Finals series" +
                     "\nMagic Johnson\nMichael Jordan\nLeBron James\nJamal Murray")
                 };
@@ -44,8 +44,8 @@ namespace MessageLogger.Data
                 {
                     new Message("Currently grinning ear to ear, listening to The Bill Simmons Pod with Doc Rivers calling Nikola Jokic, the best player in the league."),
                     new Message("Players in NBA playoff history to average 26 points, 7 assists on at least 58% True Shooting in 15+ games:" +
-                    "\nLebron James (x4)\nMichael Jordan (x2)\nJames Harden\n...and now both Jamal Murray and Nikola Jokic this playoff run.\nGreatness."),
-                    new Message("Really Cool. Denver did the thing ,and they did it together.")
+                    "\nLebron James (x4)\nMichael Jordan (x2)\nJames Harden\n... and now both Jamal Murray and Nikola Jokic this playoff run.\nGreatness."),
+                    new Message("Really Cool. Denver did the thing, and they did it together.")
                 };
 
                 ryan.Messages.AddRange(ryansMessages);
